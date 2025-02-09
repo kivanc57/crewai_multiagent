@@ -1,0 +1,547 @@
+from crewai.tools import BaseTool
+from typing import Type
+from pydantic import BaseModel, Field
+
+
+class MyCustomToolInput(BaseModel):
+    """Input schema for MyCustomTool."""
+    argument: str = Field(..., description="Description of the argument.")
+
+class MyCustomTool(BaseTool):
+    name: str = "Name of my tool"
+    description: str = (
+        "Clear description for what this tool is useful for, you agent will need this information to use it."
+    )
+    args_schema: Type[BaseModel] = MyCustomToolInput
+
+    def _run(self, argument: str) -> str:
+        # Implementation goes here
+        return "this is an example of a tool output, ignore it and move along."
+from crewai import Agent, Crew, Process, Task, LLM
+from crewai.project import CrewBase, agent, crew, task
+from dotenv import load_dotenv
+
+load_dotenv()
+
+@CrewBase
+class AiLatestDevelopment():
+	"""AiLatestDevelopment crew"""
+
+	agents_config = 'config/agents.yaml'
+	tasks_config = 'config/tasks.yaml'
+
+	ollama_llm = LLM(
+		model='ollama/llama3.2:1b',
+		base_url='http://localhost:11434',
+	)
+
+	@agent
+	def researcher(self) -> Agent:
+		return Agent(
+			config=self.agents_config['researcher'],
+			# tools=[MyCustomTool()], # Example of custom tool, loaded on the beginning of file
+			verbose=True,
+			llm=self.ollama_llm
+		)
+
+	@agent
+	def reporting_analyst(self) -> Agent:
+		return Agent(
+			config=self.agents_config['reporting_analyst'],
+			verbose=True,
+			llm=self.ollama_llm
+		)
+
+	@task
+	def research_task(self) -> Task:
+		return Task(
+			config=self.tasks_config['research_task'],
+		)
+
+	@task
+	def reporting_task(self) -> Task:
+		return Task(
+			config=self.tasks_config['reporting_task'],
+			output_file='report.md'
+		)
+
+	@crew
+	def crew(self) -> Crew:
+		"""Creates the AiLatestDevelopment crew"""
+		return Crew(
+			agents=self.agents, # Automatically created by the @agent decorator
+			tasks=self.tasks, # Automatically created by the @task decorator
+			process=Process.sequential,
+			verbose=True,
+			# process=Process.hierarchical, # In case you wanna use that instead https://docs.crewai.com/how-to/Hierarchical/
+		)
+#!/usr/bin/env python
+import sys
+import warnings
+
+from crew import AiLatestDevelopment
+
+warnings.filterwarnings("ignore", category=SyntaxWarning, module="pysbd")
+
+# This main file is intended to be a way for you to run your
+# crew locally, so refrain from adding unnecessary logic into this file.
+# Replace with inputs you want to test with, it will automatically
+# interpolate any tasks and agents information
+
+def run():
+    """
+    Run the crew.
+    """
+    inputs = {
+        'topic': 'AI LLMs'
+    }
+    AiLatestDevelopment().crew().kickoff(inputs=inputs)
+
+
+if __name__ == '__main__':
+    run()
+from crewai.tools import BaseTool
+from typing import Type
+from pydantic import BaseModel, Field
+
+
+class MyCustomToolInput(BaseModel):
+    """Input schema for MyCustomTool."""
+    argument: str = Field(..., description="Description of the argument.")
+
+class MyCustomTool(BaseTool):
+    name: str = "Name of my tool"
+    description: str = (
+        "Clear description for what this tool is useful for, you agent will need this information to use it."
+    )
+    args_schema: Type[BaseModel] = MyCustomToolInput
+
+    def _run(self, argument: str) -> str:
+        # Implementation goes here
+        return "this is an example of a tool output, ignore it and move along."
+from crewai import Agent, Crew, Process, Task
+from crewai.project import CrewBase, agent, crew, task
+from crewai_tools import SerperDevTool, ScrapeWebsiteTool, FileWriterTool
+from dotenv import load_dotenv
+
+load_dotenv()
+
+@CrewBase
+class AiNews():
+	"""AiNews crew"""
+
+	agents_config = 'config/agents.yaml'
+	tasks_config = 'config/tasks.yaml'
+
+	@agent
+	def retrieve_news(self) -> Agent:
+		return Agent(
+			config=self.agents_config['retrieve_news'],
+			tools=[SerperDevTool()],
+			verbose=True
+		)
+
+	@agent
+	def website_scraper(self) -> Agent:
+		return Agent(
+			config=self.agents_config['website_scraper'],
+			tools=[ScrapeWebsiteTool()],
+			verbose=True
+		)
+	
+	@agent
+	def ai_news_writer(self) -> Agent:
+		return Agent(
+			config=self.agents_config['ai_news_writer'],
+			tools=[],
+			verbose=True
+		)
+	
+	@agent
+	def file_writer(self) -> Agent:
+		return Agent(
+			config=self.agents_config['file_writer'],
+			tools=[FileWriterTool()],
+			verbose=True
+		)
+
+	@task
+	def retrieve_news_task(self) -> Task:
+		return Task(
+			config=self.tasks_config['retrieve_news_task'],
+		)
+
+	@task
+	def website_scrape_task(self) -> Task:
+		return Task(
+			config=self.tasks_config['website_scrape_task'],
+		)
+	
+	@task
+	def ai_news_write_task(self) -> Task:
+		return Task(
+			config=self.tasks_config['ai_news_write_task'],
+		)
+	
+	@task
+	def file_write_task(self) -> Task:
+		return Task(
+			config=self.tasks_config['file_write_task'],
+		)
+
+	@crew
+	def crew(self) -> Crew:
+		"""Creates the AiNews crew"""
+		return Crew(
+			agents=self.agents, # Automatically created by the @agent decorator
+			tasks=self.tasks, # Automatically created by the @task decorator
+			process=Process.sequential,
+			verbose=True,
+			# process=Process.hierarchical, # In case you wanna use that instead https://docs.crewai.com/how-to/Hierarchical/
+		)
+#!/usr/bin/env python
+import sys
+import warnings
+from datetime import datetime
+from crew import AiNews
+
+warnings.filterwarnings("ignore", category=SyntaxWarning, module="pysbd")
+
+# This main file is intended to be a way for you to run your
+# crew locally, so refrain from adding unnecessary logic into this file.
+# Replace with inputs you want to test with, it will automatically
+# interpolate any tasks and agents information
+
+def run():
+    """
+    Run the crew.
+    """
+    inputs = {
+        'topic': 'openai',
+        'date': datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+    }
+
+    # inputs_array = [
+    #     {
+    #         'topic': 'ai agents',
+    #         'date': datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+    #     }, 
+    #     {
+    #         'topic': 'openai',
+    #         'date': datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+    #     },
+    #     {
+    #         'topic': 'hugging face',
+    #         'date': datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+    #     }
+    # ]
+
+    AiNews().crew().kickoff(inputs=inputs)
+
+
+if __name__ == '__main__':
+    run()
+from crewai import Agent, Crew, Process, Task
+from crewai.project import CrewBase, agent, crew, task
+
+@CrewBase
+class PoemCrew():
+	"""Poem Crew"""
+
+	agents_config = 'config/agents.yaml'
+	tasks_config = 'config/tasks.yaml'
+
+	@agent
+	def poem_writer(self) -> Agent:
+		return Agent(
+			config=self.agents_config['poem_writer'],
+		)
+
+	@task
+	def write_poem(self) -> Task:
+		return Task(
+			config=self.tasks_config['write_poem'],
+		)
+
+	@crew
+	def crew(self) -> Crew:
+		"""Creates the Research Crew"""
+		return Crew(
+			agents=self.agents, # Automatically created by the @agent decorator
+			tasks=self.tasks, # Automatically created by the @task decorator
+			process=Process.sequential,
+			verbose=True,
+		)
+from typing import Type
+
+from crewai.tools import BaseTool
+from pydantic import BaseModel, Field
+
+
+class MyCustomToolInput(BaseModel):
+    """Input schema for MyCustomTool."""
+
+    argument: str = Field(..., description="Description of the argument.")
+
+
+class MyCustomTool(BaseTool):
+    name: str = "Name of my tool"
+    description: str = (
+        "Clear description for what this tool is useful for, you agent will need this information to use it."
+    )
+    args_schema: Type[BaseModel] = MyCustomToolInput
+
+    def _run(self, argument: str) -> str:
+        # Implementation goes here
+        return "this is an example of a tool output, ignore it and move along."
+#!/usr/bin/env python
+from random import randint
+
+from pydantic import BaseModel
+
+from crewai.flow.flow import Flow, listen, start
+
+from crews.poem_crew.poem_crew import PoemCrew
+
+from dotenv import load_dotenv
+
+load_dotenv()
+
+
+class PoemState(BaseModel):
+    sentence_count: int = 1
+    poem: str = ""
+
+
+class PoemFlow(Flow[PoemState]):
+
+    @start()
+    def generate_sentence_count(self):
+        print("Generating sentence count")
+        self.state.sentence_count = randint(1, 5)
+
+    @listen(generate_sentence_count)
+    def generate_poem(self):
+        print("Generating poem")
+        result = (
+            PoemCrew()
+            .crew()
+            .kickoff(inputs={"sentence_count": self.state.sentence_count})
+        )
+
+        print("Poem generated", result.raw)
+        self.state.poem = result.raw
+
+    @listen(generate_poem)
+    def save_poem(self):
+        print("Saving poem")
+        with open("poem.txt", "w") as f:
+            f.write(self.state.poem)
+
+
+def kickoff():
+    poem_flow = PoemFlow()
+    poem_flow.kickoff()
+
+
+def plot():
+    poem_flow = PoemFlow()
+    poem_flow.plot()
+
+
+if __name__ == '__main__':
+    kickoff()
+from crewai.tools import BaseTool
+from typing import Type
+from pydantic import BaseModel, Field
+
+
+class MyCustomToolInput(BaseModel):
+    """Input schema for MyCustomTool."""
+    argument: str = Field(..., description="Description of the argument.")
+
+class MyCustomTool(BaseTool):
+    name: str = "Name of my tool"
+    description: str = (
+        "Clear description for what this tool is useful for, you agent will need this information to use it."
+    )
+    args_schema: Type[BaseModel] = MyCustomToolInput
+
+    def _run(self, argument: str) -> str:
+        # Implementation goes here
+        return "this is an example of a tool output, ignore it and move along."
+from crewai import Agent, Crew, Process, Task
+from crewai.project import CrewBase, agent, crew, task
+from crewai_tools import CodeInterpreterTool
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+load_dotenv()
+
+@CrewBase
+class CodeExecutionCrew():
+	"""CodeExecution crew"""
+
+	agents_config = 'config/agents.yaml'
+	tasks_config = 'config/tasks.yaml'
+
+	@agent
+	def coding_agent(self) -> Agent:
+		return Agent(
+			config=self.agents_config['coding_agent'],
+			tools=[CodeInterpreterTool(unsafe_mode=True)],
+			# allow_code_execution=True,
+			verbose=True
+		)
+
+	@task
+	def data_analysis_task(self) -> Task:
+		return Task(
+			config=self.tasks_config['data_analysis_task'],
+		)
+
+	@crew
+	def crew(self) -> Crew:
+		"""Creates the CodeExecution crew"""
+		return Crew(
+			agents=self.agents, # Automatically created by the @agent decorator
+			tasks=self.tasks, # Automatically created by the @task decorator
+			process=Process.sequential,
+			verbose=True,
+			# process=Process.hierarchical, # In case you wanna use that instead https://docs.crewai.com/how-to/Hierarchical/
+		)
+#!/usr/bin/env python
+import sys
+import warnings
+from pathlib import Path
+
+from crew import CodeExecutionCrew
+
+warnings.filterwarnings("ignore", category=SyntaxWarning, module="pysbd")
+
+def run():
+    """
+    Run the crew.
+    """
+
+    file_path = 'County_Health_Rankings.csv'
+
+    inputs = {
+        'file_path': file_path
+    }
+
+    result = CodeExecutionCrew().crew().kickoff(inputs=inputs)
+    print(result)
+
+if __name__ == "__main__":
+    run()
+from crewai.tools import BaseTool
+from typing import Type
+from pydantic import BaseModel, Field
+
+
+class MyCustomToolInput(BaseModel):
+    """Input schema for MyCustomTool."""
+    argument: str = Field(..., description="Description of the argument.")
+
+class MyCustomTool(BaseTool):
+    name: str = "Name of my tool"
+    description: str = (
+        "Clear description for what this tool is useful for, you agent will need this information to use it."
+    )
+    args_schema: Type[BaseModel] = MyCustomToolInput
+
+    def _run(self, argument: str) -> str:
+        # Implementation goes here
+        return "this is an example of a tool output, ignore it and move along."
+from crewai import Agent, Crew, Process, Task
+from crewai.project import CrewBase, agent, crew, task
+from crewai_tools import PDFSearchTool
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+load_dotenv()
+
+# Get the directory where the script is located
+SCRIPT_DIR = Path(__file__).parent
+pdf_path = str(SCRIPT_DIR / "agentops.pdf")
+
+# Use the resolved path for the PDFSearchTool
+pdf_search_tool = PDFSearchTool(pdf=pdf_path)
+
+@CrewBase
+class PdfRag():
+	"""PdfRag crew"""
+
+	agents_config = 'config/agents.yaml'
+	tasks_config = 'config/tasks.yaml'
+
+	@agent
+	def pdf_rag_agent(self) -> Agent:
+		return Agent(
+			config=self.agents_config['pdf_rag_agent'],
+			tools=[pdf_search_tool],
+			verbose=True
+		)
+
+	@agent
+	def pdf_summary_agent(self) -> Agent:
+		return Agent(
+			config=self.agents_config['pdf_summary_agent'],
+			verbose=True
+		)
+
+	@task
+	def pdf_rag_task(self) -> Task:
+		return Task(
+			config=self.tasks_config['pdf_rag_task'],
+		)
+
+	@task
+	def pdf_summary_task(self) -> Task:
+		return Task(
+			config=self.tasks_config['pdf_summary_task'],
+		)
+
+	@crew
+	def crew(self) -> Crew:
+		"""Creates the PdfRag crew"""
+		return Crew(
+			agents=self.agents, # Automatically created by the @agent decorator
+			tasks=self.tasks, # Automatically created by the @task decorator
+			process=Process.sequential,
+			verbose=True,
+			# process=Process.hierarchical, # In case you wanna use that instead https://docs.crewai.com/how-to/Hierarchical/
+		)
+#!/usr/bin/env python
+import sys
+import warnings
+
+from crew import PdfRag
+
+warnings.filterwarnings("ignore", category=SyntaxWarning, module="pysbd")
+
+# This main file is intended to be a way for you to run your
+# crew locally, so refrain from adding unnecessary logic into this file.
+# Replace with inputs you want to test with, it will automatically
+# interpolate any tasks and agents information
+
+def run():
+    """
+    Run the crew.
+    """
+
+    user_input = input("Enter your question: ")
+
+    inputs = {
+        'input': user_input
+    }
+
+    result = PdfRag().crew().kickoff(inputs=inputs)
+    print(result)
+
+
+if __name__ == '__main__':
+    run()

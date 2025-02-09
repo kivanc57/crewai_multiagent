@@ -1,0 +1,20 @@
+[project]
+name = "06_code_execution"
+version = "0.1.0"
+description = "06-code-execution using crewAI"
+authors = [{ name = "Your Name", email = "you@example.com" }]
+requires-python = ">=3.10,<=3.13"
+dependencies = [
+    "crewai[tools]>=0.79.4,<1.0.0"
+]
+
+[project.scripts]
+06_code_execution = "06_code_execution.main:run"
+run_crew = "06_code_execution.main:run"
+train = "06_code_execution.main:train"
+replay = "06_code_execution.main:replay"
+test = "06_code_execution.main:test"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

@@ -1,0 +1,17 @@
+data_analysis_task:
+  description: >
+    Analyze the given dataset and calculate the top 10 counties with the violent crime rate.  
+    The full file path is {file_path}. Create and execute code to do this.  The columns are:
+    
+    - State
+    - County
+    - Year span
+    - Measure name
+    - Raw value
+
+    You will need to calculate the highest 10 counties with the Measure name of Violent crime rate.  They will have the raw value, year span, and 
+    return the county with the highest raw value, do this for the top 10.
+
+  expected_output: >
+    The result from code execution of analysis.
+  agent: coding_agent
